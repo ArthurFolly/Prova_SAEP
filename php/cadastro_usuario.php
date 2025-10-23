@@ -1,9 +1,11 @@
-<?php require 'config.php'; ?>
+<?php require 'config.php';
+if (isset($_SESSION['usuario_id'])) header('Location: principal.php');
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Cadastrar Usuário</title>
+    <title>SAEP - Cadastrar Usuário</title>
     <link rel="stylesheet" href="../css/style.css">
     <script src="../js/script.js"></script>
 </head>
@@ -30,6 +32,13 @@
                 </svg>
             </span>
         </div>
+        <div class="select-group">
+            <label for="tipo_usuario">Tipo de Usuário:</label>
+            <select name="tipo_usuario" id="tipo_usuario" required>
+                <option value="0">Usuário Comum</option>
+                <option value="1">Administrador</option>
+            </select>
+        </div>
         <button type="submit">Cadastrar</button>
     </form>
     <p class="link">Já tem conta? <a href="index.php">Faça login</a></p>
@@ -39,19 +48,29 @@
         $nome = trim($_POST['nome_usuario']);
         $senha = $_POST['senha'];
         $conf = $_POST['confirmar_senha'];
-        if (strlen($senha) < 6) echo '<p class="erro">Senha deve ter 6+ caracteres!</p>';
-        elseif ($senha !== $conf) echo '<p class="erro">Senhas não coincidem!</p>';
-        else {
+        $is_admin = (int)$_POST['tipo_usuario'];
+
+        if (strlen($nome) < 3) {
+            echo '<p class="erro">Usuário deve ter pelo menos 3 caracteres!</p>';
+        } elseif (strlen($senha) < 6) {
+            echo '<p class="erro">Senha deve ter 6+ caracteres!</p>';
+        } elseif ($senha !== $conf) {
+            echo '<p class="erro">Senhas não coincidem!</p>';
+        } else {
             $stmt = $conn->prepare("SELECT id FROM usuarios WHERE nome_usuario = ?");
             $stmt->bind_param("s", $nome);
             $stmt->execute();
-            if ($stmt->get_result()->num_rows > 0) echo '<p class="erro">Usuário já existe!</p>';
-            else {
+            if ($stmt->get_result()->num_rows > 0) {
+                echo '<p class="erro">Usuário já existe!</p>';
+            } else {
                 $hash = password_hash($senha, PASSWORD_DEFAULT);
-                $stmt = $conn->prepare("INSERT INTO usuarios (nome_usuario, senha) VALUES (?, ?)");
-                $stmt->bind_param("ss", $nome, $hash);
-                if ($stmt->execute()) echo '<p class="sucesso">Cadastrado! <a href="index.php">Login</a></p>';
-                else echo '<p class="erro">Erro!</p>';
+                $stmt = $conn->prepare("INSERT INTO usuarios (nome_usuario, senha, is_admin) VALUES (?, ?, ?)");
+                $stmt->bind_param("ssi", $nome, $hash, $is_admin);
+                if ($stmt->execute()) {
+                    echo '<p class="sucesso">Usuário cadastrado com sucesso! <a href="index.php">Fazer login</a></p>';
+                } else {
+                    echo '<p class="erro">Erro ao cadastrar!</p>';
+                }
             }
         }
     }

@@ -1,5 +1,11 @@
-<?php require 'config.php';
-if (isset($_SESSION['usuario_id'])) header('Location: principal.php');
+<?php 
+
+require 'config.php';
+
+if (isset($_SESSION['usuario_id'])) {
+    header('Location: principal.php');
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -15,6 +21,7 @@ if (isset($_SESSION['usuario_id'])) header('Location: principal.php');
     <h3>Login</h3>
     <form method="POST" onsubmit="return validarLogin()">
         <input type="text" name="nome_usuario" id="nome_usuario" placeholder="Usuário" required>
+        
         <div class="input-group">
             <input type="password" name="senha" id="senha" placeholder="Senha" required>
             <span class="olho" onclick="toggleSenha('senha', this)">
@@ -24,24 +31,35 @@ if (isset($_SESSION['usuario_id'])) header('Location: principal.php');
                 </svg>
             </span>
         </div>
+
         <button type="submit">Entrar</button>
     </form>
+
     <p class="link">Não tem conta? <a href="cadastro_usuario.php">Cadastre-se</a></p>
 
     <?php
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $stmt = $conn->prepare("SELECT id, senha FROM usuarios WHERE nome_usuario = ?");
+        // ✅ CORREÇÃO: Adicione 'is_admin' na consulta SELECT
+        $stmt = $conn->prepare("SELECT id, nome_usuario, senha, is_admin FROM usuarios WHERE nome_usuario = ?");
         $stmt->bind_param('s', $_POST['nome_usuario']);
         $stmt->execute();
-        $res = $stmt->get_result();
-        if ($u = $res->fetch_assoc()) {
-            if (password_verify($_POST['senha'], $u['senha'])) {
-                $_SESSION['usuario_id'] = $u['id'];
-                $_SESSION['nome_usuario'] = $_POST['nome_usuario'];
+        $resultado = $stmt->get_result();
+        
+        if ($usuario = $resultado->fetch_assoc()) {
+            if (password_verify($_POST['senha'], $usuario['senha'])) {
+                // ✅ CORREÇÃO: Salvar TODOS os dados na sessão
+                $_SESSION['usuario_id'] = $usuario['id'];
+                $_SESSION['nome_usuario'] = $usuario['nome_usuario'];
+                $_SESSION['is_admin'] = $usuario['is_admin']; // ← ESTAVA FALTANDO ESTA LINHA
+                
                 header('Location: principal.php');
                 exit;
-            } else echo '<p class="erro">Senha incorreta!</p>';
-        } else echo '<p class="erro">Usuário não encontrado!</p>';
+            } else {
+                echo '<p class="erro">Senha incorreta!</p>';
+            }
+        } else {
+            echo '<p class="erro">Usuário não encontrado!</p>';
+        }
     }
     ?>
 </div>

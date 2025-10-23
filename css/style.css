@@ -195,6 +195,43 @@ input:focus, select:focus {
 }
 
 /* ===================================================== */
+/* SELECT PERSONALIZADO (PARA TIPO DE USUÁRIO) */
+/* ===================================================== */
+.select-group {
+    margin: 15px 0;
+    text-align: left;
+}
+
+.select-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #555;
+    font-size: 15px;
+}
+
+.select-group select {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2212%22%20height%3D%228%22%20viewBox%3D%220%200%2012%208%22%3E%3Cpath%20fill%3D%22%236c757d%22%20d%3D%22M0%2C0%20L12%2C0%20L6%2C8%20L0%2C0%22/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 12px;
+}
+
+.select-group select:focus {
+    border-color: #e67e22;
+    box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.2);
+}
+
+/* ===================================================== */
 /* BUSCA */
 /* ===================================================== */
 .busca {

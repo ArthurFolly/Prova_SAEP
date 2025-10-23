@@ -2,11 +2,10 @@
 require 'config.php';
 if (!isset($_SESSION['usuario_id'])) header('Location: index.php');
 
-// RESETAR FORMULÁRIO APÓS SALVAR
 $editando = false;
-if (isset($_POST['editar']) || isset($_POST['adicionar'])) {
-    $editando = false; // Após salvar, volta ao modo adicionar
-} elseif (isset($_GET['editar'])) {
+$produto_edit = [];
+
+if (isset($_GET['editar'])) {
     $editando = true;
     $id_edit = (int)$_GET['editar'];
     $stmt = $conn->prepare("SELECT * FROM produtos WHERE id = ?");
@@ -25,7 +24,6 @@ $stmt->bind_param("s", $like);
 $stmt->execute();
 $produtos = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// ADICIONAR
 if (isset($_POST['adicionar'])) {
     $stmt = $conn->prepare("INSERT INTO produtos (nome, descricao, material, tamanho, peso, estoque_minimo, estoque_atual) VALUES (?, ?, ?, ?, ?, ?, 0)");
     $stmt->bind_param("ssssdi", $_POST['nome'], $_POST['descricao'], $_POST['material'], $_POST['tamanho'], $_POST['peso'], $_POST['estoque_minimo']);
@@ -35,17 +33,15 @@ if (isset($_POST['adicionar'])) {
     exit;
 }
 
-// EDITAR
 if (isset($_POST['editar'])) {
     $stmt = $conn->prepare("UPDATE produtos SET nome=?, descricao=?, material=?, tamanho=?, peso=?, estoque_minimo=? WHERE id=?");
     $stmt->bind_param("ssssdii", $_POST['nome'], $_POST['descricao'], $_POST['material'], $_POST['tamanho'], $_POST['peso'], $_POST['estoque_minimo'], $_POST['id']);
     $stmt->execute();
-    $_SESSION['mensagem'] = ['tipo' => 'sucesso', 'texto' => 'Produto atualizado com sucesso!'];
+    $_SESSION['mensagem'] = ['tipo' => 'sucesso', 'texto' => 'Produto atualizado!'];
     header('Location: cadastro.php');
     exit;
 }
 
-// EXCLUIR
 if (isset($_POST['excluir'])) {
     $stmt = $conn->prepare("DELETE FROM produtos WHERE id = ?");
     $stmt->bind_param("i", $_POST['id']);
@@ -70,20 +66,15 @@ if (isset($_POST['excluir'])) {
         <a href="principal.php" class="btn-voltar">Voltar</a>
     </header>
 
-    <!-- MENSAGEM -->
     <?php if ($mensagem): ?>
-        <div class="<?php echo $mensagem['tipo']; ?>">
-            <?php echo htmlspecialchars($mensagem['texto']); ?>
-        </div>
+        <div class="<?php echo $mensagem['tipo']; ?>"><?php echo htmlspecialchars($mensagem['texto']); ?></div>
     <?php endif; ?>
 
-    <!-- BUSCA -->
     <form method="POST" class="busca">
         <input type="text" name="busca" placeholder="Buscar produto..." value="<?php echo htmlspecialchars($busca); ?>">
         <button type="submit">Buscar</button>
     </form>
 
-    <!-- TABELA -->
     <table>
         <tr>
             <th>ID</th><th>Nome</th><th>Descrição</th><th>Material</th><th>Tamanho</th><th>Peso</th>
@@ -100,28 +91,27 @@ if (isset($_POST['excluir'])) {
             <td><?php echo $p['estoque_minimo']; ?></td>
             <td><strong><?php echo $p['estoque_atual']; ?></strong></td>
             <td>
-                <a href="cadastro.php?editar=<?php echo $p['id']; ?>" class="btn" style="padding: 6px 12px; font-size: 14px;">Editar</a>
+                <a href="?editar=<?php echo $p['id']; ?>" class="btn">Editar</a>
                 <form method="POST" style="display:inline;">
                     <input type="hidden" name="id" value="<?php echo $p['id']; ?>">
-                    <button type="submit" name="excluir" class="btn" style="background: #dc3545; padding: 6px 12px; font-size: 14px;" onclick="return confirm('Excluir?')">Excluir</button>
+                    <button type="submit" name="excluir" class="btn" style="background:#dc3545;" onclick="return confirm('Excluir?')">Excluir</button>
                 </form>
             </td>
         </tr>
         <?php endforeach; ?>
     </table>
 
-    <!-- FORMULÁRIO -->
-    <h2 id="formTitulo"><?php echo $editando ? 'Editar Produto' : 'Adicionar Produto'; ?></h2>
+    <h2><?php echo $editando ? 'Editar Produto' : 'Adicionar Produto'; ?></h2>
     <form method="POST" id="formProduto" onsubmit="return validarProduto()">
-        <input type="hidden" name="id" id="id" value="<?php echo $editando ? $produto_edit['id'] : ''; ?>">
-        <input type="text" name="nome" id="nome" placeholder="Nome" value="<?php echo $editando ? htmlspecialchars($produto_edit['nome']) : ''; ?>" required>
-        <input type="text" name="descricao" id="descricao" placeholder="Descrição" value="<?php echo $editando ? htmlspecialchars($produto_edit['descricao']) : ''; ?>">
-        <input type="text" name="material" id="material" placeholder="Material" value="<?php echo $editando ? htmlspecialchars($produto_edit['material']) : ''; ?>">
-        <input type="text" name="tamanho" id="tamanho" placeholder="Tamanho" value="<?php echo $editando ? htmlspecialchars($produto_edit['tamanho']) : ''; ?>">
-        <input type="number" step="0.01" name="peso" id="peso" placeholder="Peso" value="<?php echo $editando ? $produto_edit['peso'] : ''; ?>">
-        <input type="number" name="estoque_minimo" id="estoque_minimo" placeholder="Estoque Mínimo" value="<?php echo $editando ? $produto_edit['estoque_minimo'] : ''; ?>" required>
-        <input type="number" value="<?php echo $editando ? $produto_edit['estoque_atual'] : '0'; ?>" readonly title="Só muda com entrada/saída">
-        <button type="submit" name="<?php echo $editando ? 'editar' : 'adicionar'; ?>" id="btnEnviar">
+        <input type="hidden" name="id" value="<?php echo $editando ? $produto_edit['id'] : ''; ?>">
+        <input type="text" name="nome" placeholder="Nome" value="<?php echo $editando ? htmlspecialchars($produto_edit['nome']) : ''; ?>" required>
+        <input type="text" name="descricao" placeholder="Descrição" value="<?php echo $editando ? htmlspecialchars($produto_edit['descricao']) : ''; ?>">
+        <input type="text" name="material" placeholder="Material" value="<?php echo $editando ? htmlspecialchars($produto_edit['material']) : ''; ?>">
+        <input type="text" name="tamanho" placeholder="Tamanho" value="<?php echo $editando ? htmlspecialchars($produto_edit['tamanho']) : ''; ?>">
+        <input type="number" step="0.01" name="peso" placeholder="Peso" value="<?php echo $editando ? $produto_edit['peso'] : ''; ?>">
+        <input type="number" name="estoque_minimo" placeholder="Estoque Mínimo" value="<?php echo $editando ? $produto_edit['estoque_minimo'] : ''; ?>" required>
+        <input type="number" value="<?php echo $editando ? $produto_edit['estoque_atual'] : '0'; ?>" readonly>
+        <button type="submit" name="<?php echo $editando ? 'editar' : 'adicionar'; ?>">
             <?php echo $editando ? 'Salvar Alterações' : 'Adicionar Produto'; ?>
         </button>
     </form>

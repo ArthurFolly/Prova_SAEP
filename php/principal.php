@@ -20,6 +20,9 @@ if (isset($_GET['logout'])) { session_destroy(); header('Location: index.php'); 
     <div class="menu">
         <a href="cadastro.php" class="btn">Cadastro de Produtos</a>
         <a href="gestao.php" class="btn">Gestão de Estoque</a>
+        <?php if ($_SESSION['is_admin'] == 1): ?>
+            <a href="relatorio.php" class="btn">Relatórios</a>
+        <?php endif; ?>
     </div>
 </div>
 </body>
